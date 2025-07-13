@@ -1,5 +1,6 @@
 from typing import List, Dict, Union
 import json
+import re
 
 
 class Joueur:
@@ -23,14 +24,24 @@ class Joueur:
         self.inventaires[ressource["nom"]] += ressource["quantite"]
         print(f"Vous avez récupérer {ressource["quantite"]} de {ressource["nom"]}")
 
-    def payer_allie(self, allie: Dict[str, Union[str, int]]) -> None:
-        print(allie["dialogue"])
-        prix = allie["dialogue"].split()[-3]
-        if prix > self.inventaires["or"]:
+    def payer_allie(
+        self,
+        allie: Dict[str, Union[str, int]],
+        personnages: List[Dict[str, Union[str, int]]],
+    ) -> None:
+        prix = re.search(pattern=r"(\d+) unités d'or", string=allie["dialogue"])
+        print(prix)
+        if not prix:
+            print("Prix non trouver donc c'est gratuit.")
+            self.force += allie["force"]
+            personnages.remove(personnages.index(allie))
+        elif int(prix.group()[0]) > self.inventaires["or"]:
             print(f"Vous n'avez pas assez d'or pour payer {allie["nom"]}.")
         else:
             self.inventaires["or"] -= prix
             self.force += allie["force"]
+            print("Allié payer avec succés.")
+            personnages.remove(personnages.index(allie))
 
     def attaquer(self, ennemi: Dict[str, Union[str, int]]) -> None:
         if self.force < ennemi["force"]:
@@ -96,23 +107,75 @@ def load_json(
     return data
 
 
-def jouer_une_session(filename: str):
+def sauvegarder_partie(
+    filename: str,
+    environnement: Dict[str, List[Dict[str, Union[str, List[str], int]]]],
+    joueur: Joueur,
+) -> None:
+    dict_joueur = {
+        "vie": joueur.vie,
+        "force": joueur.force,
+        "inventaire": joueur.inventaires,
+    }
+    environnement["joueur"] = dict_joueur
+    with open(file=filename, mode="w", encoding="utf-8") as fichier:
+        json.dump(environnement, fichier, ensure_ascii=False, indent=2)
+
+
+def jouer_une_session(filename: str) -> None:
     environnement = load_json(filename)
     joueur = Joueur(vie=100, force=10, inventaires={"or": 0})
     i = 0
     while i != -1:
         print("Bienvenue au village de Valun.")
         print(
-            "Veuillez choisir une action entre: 1: Voir la liste des alliés du village et 2: Sortir du village"
+            "Veuillez choisir une action entre: 1: Allée dans la guilde des alliés, 2: Sortir du village et 3: sauvegarder et -1: quitter"
         )
+        i = int(input())
         match i:
             case 1:
-                allie = [
-                    personnage
-                    for personnage in environnement["personnages"]
-                    if personnage["type"] == "allié"
-                ]
-                print(
-                    "Voici la liste des alliés disponible que vous pouvez payer:", allie
-                )
-                choix_allie = input()
+                ii = 0
+                while ii != -1:
+                    print(
+                        "Veuillez choisir une action entre: 1: voir la liste des allié, 2: sauvegarder et -1: Revenir à la place principale du village"
+                    )
+                    ii = int(input())
+                    match ii:
+                        case 1:
+                            allies = [
+                                allie
+                                for allie in environnement["personnages"]
+                                if allie["type"] == "allié"
+                            ]
+                            if len(allies) == 0:
+                                print("Il n'y a plus d'alliés disponible.")
+                            else:
+                                print("Voici la liste des alliés disponible:")
+                                for allie in allies:
+                                    print(
+                                        f"numéros: {allies.index(allie)} - nom: {allie["nom"]} - force: {allie["force"]} - dialogue: {allie["dialogue"]}"
+                                    )
+                                print(
+                                    "Sélectionner le numéros correspondant à l'allié que vous voulez sélectionner ou sélectionner -1 pour ne rien choisir."
+                                )
+                                choix_allie = int(input())
+                                if choix_allie == -1:
+                                    print("Aucun allie choisie.")
+                                else:
+                                    try:
+                                        allie_selectionner = allies[choix_allie]
+                                        joueur.payer_allie(
+                                            allie_selectionner,
+                                            environnement["personnages"],
+                                        )
+                                    except IndexError as e:
+                                        print(
+                                            f"L'index utilisé est en dehors de la plage {e}"
+                                        )
+                        case 2:
+                            sauvegarder_partie(
+                                "partie_sauvegarder", environnement, joueur
+                            )
+
+
+jouer_une_session("data.json")
