@@ -101,18 +101,45 @@ def jouer_une_session(filename: str):
     joueur = Joueur(vie=100, force=10, inventaires={"or": 0})
     i = 0
     while i != -1:
+        i = int(input())
         print("Bienvenue au village de Valun.")
         print(
-            "Veuillez choisir une action entre: 1: Voir la liste des alliés du village et 2: Sortir du village"
+            """Veuillez choisir une action entre: 
+            1: Menus des alliés du village 
+            2: Sortir du village 
+            3: Sauvegarder la progression 
+            -1: Quitter le jeu en sauvegardant la progression"""
         )
         match i:
             case 1:
-                allie = [
-                    personnage
-                    for personnage in environnement["personnages"]
-                    if personnage["type"] == "allié"
-                ]
-                print(
-                    "Voici la liste des alliés disponible que vous pouvez payer:", allie
-                )
-                choix_allie = input()
+                ii = 0
+                while ii != -1:
+                    ii = int(input())
+                    print(
+                        """Veuillez choisir une action entre: 
+                        1: Voir la liste des alliés disponible 
+                        2: Acheter un alliés 
+                        3: Sauvegarder la progression 
+                        -1: Sortir du menu des alliés"""
+                    )
+                    allies = [
+                        personnage
+                        for personnage in environnement["personnages"]
+                        if personnage["type"] == "allié"
+                    ]
+                    match ii:
+                        case 1:
+                            print(
+                                "Voici la liste des alliés disponible que vous pouvez payer:",
+                                allies,
+                            )
+                        case 2:
+                            choix_allie = input()
+                            allie_choisie = list(
+                                filter(lambda x: x["nom"] == choix_allie, allies)
+                            )
+                            joueur.payer_allie(allie_choisie[0])
+                        case 3:
+                            
+                        case -1:
+                            print("Retour en arriére.")
