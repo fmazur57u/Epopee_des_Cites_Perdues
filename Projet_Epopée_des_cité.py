@@ -1,6 +1,7 @@
 from typing import List, Dict, Union
 import json
 import re
+import os
 
 
 class Joueur:
@@ -123,8 +124,16 @@ def sauvegarder_partie(
 
 
 def jouer_une_session(filename: str) -> None:
-    environnement = load_json(filename)
-    joueur = Joueur(vie=100, force=10, inventaires={"or": 0})
+    if os.path.exists("partie_sauvegarder.json"):
+        environnement = load_json("partie_sauvegarder.json")
+        joueur = Joueur(
+            vie=environnement["joueur"]["vie"],
+            force=environnement["joueur"]["force"],
+            inventaires=environnement["joueur"]["inventaire"],
+        )
+    else:
+        environnement = load_json(filename)
+        joueur = Joueur(vie=100, force=10, inventaires={"or": 0})
     i = 0
     while i != -1:
         print("Bienvenue au village de Valun.")
@@ -174,8 +183,10 @@ def jouer_une_session(filename: str) -> None:
                                         )
                         case 2:
                             sauvegarder_partie(
-                                "partie_sauvegarder", environnement, joueur
+                                "partie_sauvegarder.json", environnement, joueur
                             )
+                        case _:
+                            print("Commande non reconnue.")
 
 
 jouer_une_session("data.json")
