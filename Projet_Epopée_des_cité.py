@@ -1,4 +1,4 @@
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Tuple
 import json
 import re
 import os
@@ -12,11 +12,65 @@ class Joueur:
         self.inventaires = inventaires
 
     def afficher_lieux(self, lieux: List[Dict[str, Union[str, List[str]]]]) -> None:
-        liste_des_lieux = [
-            f"nom: {lieu["nom"]}, description: {lieu["description"]}, ressources :{lieu["ressources"]}, ennemis: {lieu["ennemis"]}"
-            for lieu in lieux
+        for lieu in lieux:
+            print(
+                f"numéros:{lieux.index(lieu)}, nom: {lieu["nom"]}, description: {lieu["description"]}, ressources :{lieu["ressources"]}, ennemis: {lieu["ennemis"]}"
+            )
+
+    def afficher_allie(
+        self,
+        environnement: Dict[str, List[Dict[str, Union[str, List[str], int]]]],
+    ) -> List[Dict[str, Union[str, int]]]:
+        allies = [
+            allie for allie in environnement["personnages"] if allie["type"] == "allié"
         ]
-        print(liste_des_lieux)
+        if len(allies) == 0:
+            print("Il n'y a plus d'alliés disponible.")
+        else:
+            print("Voici la liste des alliés disponible:")
+            for allie in allies:
+                print(
+                    f"numéros: {allies.index(allie)} - nom: {allie["nom"]} - force: {allie["force"]} - dialogue: {allie["dialogue"]}"
+                )
+        return allies
+
+    def afficher_ennemis(
+        self,
+        environnement: Dict[str, List[Dict[str, Union[str, List[str], int]]]],
+        lieu: Dict[str, Union[str, List[str]]],
+    ) -> List[Dict[str, Union[str, int]]]:
+        ennemis = [
+            ennemi
+            for ennemi in environnement["personnages"]
+            if ennemis["type"] == "ennemi"
+        ]
+        if len(ennemis) == 0:
+            print("Il n'y a plus d'alliés disponible.")
+        else:
+            print("Voici la liste des alliés disponible:")
+            for allie in allies:
+                print(
+                    f"numéros: {allies.index(allie)} - nom: {allie["nom"]} - force: {allie["force"]} - dialogue: {allie["dialogue"]}"
+                )
+        return ennemis
+
+    def choisir_allie(
+        self,
+        choix_allie: int,
+        environnement: Dict[str, List[Dict[str, Union[str, List[str], int]]]],
+        allies: List[Dict[str, Union[str, int]]],
+    ) -> None:
+        if choix_allie == -1:
+            print("Aucun allie choisie.")
+        else:
+            try:
+                allie_selectionner = allies[choix_allie]
+                self.payer_allie(
+                    allie_selectionner,
+                    environnement["personnages"],
+                )
+            except IndexError as e:
+                print(f"L'index utilisé est en dehors de la plage {e}")
 
     def verification_inventaire(self) -> None:
         print(self.inventaires)
@@ -123,7 +177,9 @@ def sauvegarder_partie(
         json.dump(environnement, fichier, ensure_ascii=False, indent=2)
 
 
-def jouer_une_session(filename: str) -> None:
+def creation_environnement(
+    filename: str,
+) -> Tuple[Union[Dict[str, List[Dict[str, Union[str, List[str], int]]]], Joueur]]:
     if os.path.exists("partie_sauvegarder.json"):
         environnement = load_json("partie_sauvegarder.json")
         joueur = Joueur(
@@ -134,59 +190,72 @@ def jouer_une_session(filename: str) -> None:
     else:
         environnement = load_json(filename)
         joueur = Joueur(vie=100, force=10, inventaires={"or": 0})
-    i = 0
-    while i != -1:
+    return environnement, joueur
+
+
+def jouer_une_session(filename: str) -> None:
+    environnement, joueur = creation_environnement(filename)
+    choix_centre_village = 0
+    while choix_centre_village != -1:
         print("Bienvenue au village de Valun.")
         print(
             "Veuillez choisir une action entre: 1: Allée dans la guilde des alliés, 2: Sortir du village et 3: sauvegarder et -1: quitter"
         )
-        i = int(input())
-        match i:
+        choix_centre_village = int(input())
+        match choix_centre_village:
             case 1:
-                ii = 0
-                while ii != -1:
+                choix_menu_allies = 0
+                while choix_menu_allies != -1:
                     print(
                         "Veuillez choisir une action entre: 1: voir la liste des allié, 2: sauvegarder et -1: Revenir à la place principale du village"
                     )
-                    ii = int(input())
-                    match ii:
+                    choix_menu_allies = int(input())
+                    match choix_menu_allies:
                         case 1:
-                            allies = [
-                                allie
-                                for allie in environnement["personnages"]
-                                if allie["type"] == "allié"
-                            ]
-                            if len(allies) == 0:
-                                print("Il n'y a plus d'alliés disponible.")
-                            else:
-                                print("Voici la liste des alliés disponible:")
-                                for allie in allies:
-                                    print(
-                                        f"numéros: {allies.index(allie)} - nom: {allie["nom"]} - force: {allie["force"]} - dialogue: {allie["dialogue"]}"
-                                    )
-                                print(
-                                    "Sélectionner le numéros correspondant à l'allié que vous voulez sélectionner ou sélectionner -1 pour ne rien choisir."
-                                )
-                                choix_allie = int(input())
-                                if choix_allie == -1:
-                                    print("Aucun allie choisie.")
-                                else:
-                                    try:
-                                        allie_selectionner = allies[choix_allie]
-                                        joueur.payer_allie(
-                                            allie_selectionner,
-                                            environnement["personnages"],
-                                        )
-                                    except IndexError as e:
-                                        print(
-                                            f"L'index utilisé est en dehors de la plage {e}"
-                                        )
+                            allies = joueur.afficher_allie(environnement)
+                            print(
+                                "Sélectionner le numéros correspondant à l'allié que vous voulez sélectionner ou sélectionner -1 pour ne rien choisir."
+                            )
+                            choix_allie = int(input())
+                            joueur.choisir_allie(choix_allie, environnement, allies)
                         case 2:
                             sauvegarder_partie(
                                 "partie_sauvegarder.json", environnement, joueur
                             )
                         case _:
                             print("Commande non reconnue.")
+            case 2:
+                choix_menu_lieu = 0
+                while choix_menu_lieu != -1:
+                    print(
+                        "Veuillez choisir une action entre: 1: voir la liste des lieux, 2: sauvegarder et -1: Revenir à la place principale du village"
+                    )
+                    choix_menu_lieu = int(input())
+                    match choix_menu_lieu:
+                        case 1:
+                            joueur.afficher_lieux(environnement["lieux"])
+                            print(
+                                "Sélectionner le numéros correspondant au lieu que vous voulez sélectionner ou sélectionner -1 pour ne rien choisir."
+                            )
+                            choix_lieu = int(input())
+                            if choix_lieu == -1:
+                                print("Aucun lieu choisie.")
+                            else:
+                                try:
+                                    lieu_selectionner = environnement["lieux"][
+                                        choix_lieu
+                                    ]
+                                    print(f"Vous entrez dans {lieu_selectionner}")
+                                    choix_action = 0
+                                    while choix_action != -1:
+                                        print(
+                                            "Veuillez sélectionner l'action que vous souhaitez faire: 1-Voir les ennemis de la zone, 2-Voir les ressource de la zone, 3-Sauvegarder, -1:Revenir au menu des lieux"
+                                        )
+                                        choix_action = int(input())
+                                except IndexError as e:
+                                    print(
+                                        f"L'index utilisé est en dehors de la plage {e}"
+                                    )
 
 
 jouer_une_session("data.json")
