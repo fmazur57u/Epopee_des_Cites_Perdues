@@ -4,12 +4,18 @@ import re
 import os
 
 
-class Joueur:
-
-    def __init__(self, vie: int, force: int, inventaires: Dict[str, int]):
-        self.vie = vie
+class Personnage:
+    def __init__(self, force: int, nom: str):
         self.force = force
-        self.inventaires = inventaires
+        self.nom = nom
+
+
+class Joueur(Personnage):
+
+    def __init__(self, nom: str, force: int, vie: int, inventaire: Dict[str, int]):
+        super().__init__(force, nom)
+        self.vie = vie
+        self.inventaires = inventaire
 
     def afficher_lieux(self, lieux: List[Dict[str, Union[str, List[str]]]]) -> None:
         for lieu in lieux:
@@ -33,26 +39,6 @@ class Joueur:
                     f"numéros: {allies.index(allie)} - nom: {allie["nom"]} - force: {allie["force"]} - dialogue: {allie["dialogue"]}"
                 )
         return allies
-
-    def afficher_ennemis(
-        self,
-        environnement: Dict[str, List[Dict[str, Union[str, List[str], int]]]],
-        lieu: Dict[str, Union[str, List[str]]],
-    ) -> List[Dict[str, Union[str, int]]]:
-        ennemis = [
-            ennemi
-            for ennemi in environnement["personnages"]
-            if ennemis["type"] == "ennemi"
-        ]
-        if len(ennemis) == 0:
-            print("Il n'y a plus d'alliés disponible.")
-        else:
-            print("Voici la liste des alliés disponible:")
-            for allie in allies:
-                print(
-                    f"numéros: {allies.index(allie)} - nom: {allie["nom"]} - force: {allie["force"]} - dialogue: {allie["dialogue"]}"
-                )
-        return ennemis
 
     def choisir_allie(
         self,
@@ -104,6 +90,18 @@ class Joueur:
             print(f"L'ennemi vous fait {ennemi["force"]} de point de dégats.")
         else:
             print(f"Vous avez tuer un {ennemi["nom"]}.")
+
+
+class Allie(Personnage):
+    def __init__(self, force: int, nom: str, dialogue: str):
+        super().__init__(force, nom)
+        self.dialogue = dialogue
+
+    def __str__(self):
+        return f"{self.nom}, {self.force}"
+
+    def parler(self):
+        print(self.dialogue)
 
 
 def load_json(
