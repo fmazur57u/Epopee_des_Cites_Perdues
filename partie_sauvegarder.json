@@ -1,0 +1,85 @@
+{
+  "joueur": {
+    "force": 10,
+    "nom": "T",
+    "vie": 100,
+    "inventaires": {
+      "or": 0
+    }
+  },
+  "allies": [
+    {
+      "force": 5,
+      "nom": "Arwen",
+      "dialogue": "Je peux t'aider à explorer, mais il me faut 10 unités d'or."
+    }
+  ],
+  "lieux": [
+    {
+      "nom": "Temple Oublié",
+      "description": "Un temple envahi par la végétation",
+      "ressources": [
+        {
+          "nom": "or",
+          "quantite": 20,
+          "utilite": "Acheter de l'aide"
+        },
+        {
+          "nom": "bois",
+          "quantite": 10,
+          "utilite": "Construire des abris"
+        },
+        {
+          "nom": "herbes",
+          "quantite": 20,
+          "utilite": "Préparer des potions de soins"
+        }
+      ],
+      "ennemis": [
+        {
+          "force": 8,
+          "nom": "Serpent Géant",
+          "dialogue": "Sssss... !"
+        },
+        {
+          "force": 12,
+          "nom": "loup spectral",
+          "dialogue": "Ouuuh ... !"
+        }
+      ]
+    },
+    {
+      "nom": "Forêt Maudite",
+      "description": "Une forêt sombre et mystérieuse",
+      "ressources": [
+        {
+          "nom": "or",
+          "quantite": 20,
+          "utilite": "Acheter de l'aide"
+        },
+        {
+          "nom": "bois",
+          "quantite": 10,
+          "utilite": "Construire des abris"
+        },
+        {
+          "nom": "herbes",
+          "quantite": 20,
+          "utilite": "Préparer des potions de soins"
+        }
+      ],
+      "ennemis": [
+        {
+          "force": 8,
+          "nom": "Serpent Géant",
+          "dialogue": "Sssss... !"
+        },
+        {
+          "force": 12,
+          "nom": "loup spectral",
+          "dialogue": "Ouuuh ... !"
+        }
+      ]
+    }
+  ]
+}
