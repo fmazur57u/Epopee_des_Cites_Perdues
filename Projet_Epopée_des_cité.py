@@ -66,23 +66,75 @@ class Lieu:
 
 
 class Joueur(Personnage):
+    """Cette classe représente l'avatar du joueur qui à un nom, des points de forces, des points de vie et un inventaire.
+    Le joueur peut regarder une carte, peut regarder la liste des alliés dispônible dans la guile des alliés, peut voir sont inventaire,
+    peut prendre des objets, peut payer un allié, peut attaquer un ennemi.
+
+    Attributes:
+        nom (str): Le nom de l'avatar du joueur que le joeur à choisie au tous début du jeu.
+        force (int): Les points de force de l'avatar du joueur.
+        vie (int): Les points de vie du joueur. Si il n'y a plus de point de vie, le joueur est mort.
+        inventaire (Dict[str, int]): inventaire de l'avatar du joueur.
+
+    Examples:
+        >>> joueur = Joueur("Talion", 10, 100, inventaire = {"or": 0})
+        >>> joueur.verification_inventaire()
+        {"or": 0}
+    """
 
     def __init__(self, nom: str, force: int, vie: int, inventaire: Dict[str, int]):
+        """Initialises un nouveau joueur.
+
+        Args:
+            nom (str): Le nom de l'avatar du joueur que le joeur à choisie au tous début du jeu.
+            force (int): Les points de force de l'avatar du joueur.
+            vie (int): Les points de vie du joueur. Si il n'y a plus de point de vie, le joueur est mort.
+            inventaire (Dict[str, int]): inventaire de l'avatar du joueur.
+        """
         super().__init__(force, nom)
         self.vie = vie
         self.inventaire = inventaire
 
     def afficher_lieux(self, lieux: List[Lieu]) -> None:
+        """Utlise la carte pour voir tous les lieux disponible et non résolue.
+
+        Args:
+            List[Lieu]: Liste d'objet de type lieu qui correspond au lieu disponble sur la carte.
+
+        Exemples:
+            >>> lieux = [Lieu(nom="Temple oublié", description="Un temple envahi par la végétation",
+            ressources=[Ressource(nom="or", quantite=20, utilite="Acheter de l'aide")],
+            ennemis=[Ennemis(nom="Serpent géant", force=8, dialogue="SSSSSh")])]
+            >>> joueur = Joueur("Talion", 10, 100, inventaire = {"or": 0})
+            >>> joueur.afficher_lieux(lieux)
+            nom: Temple oublié, description: Un temple envahi par la végétation
+            Voici la liste des ressources.
+            or, 20, Acheter de l'aide
+            Voici la liste des ennemis.
+            nom: serpent géant, force: 8
+        """
         for lieu in lieux:
             lieu.representation()
             print("")
 
     def afficher_allie(self, allies: List[Allie]) -> None:
+        """Utlise le panneaux qui indique la liste des alliés disponible.
+
+        Args:
+            List[Allie]: Liste d'objet de type Alliés qui correspond au alliés disponible.
+
+        Exemples:
+            >>> Alliés = [Allie(nom="arwen", force = 5, dialogue = "Je peux t'aider à explorer, mais il me faut 10 unités d'or.")]
+            >>> joueur = Joueur("Talion", 10, 100, inventaire = {"or": 0})
+            >>> joueur.afficher_allie(Alliés)
+            nom: arwen, force: 5
+        """
         for allie in allies:
             print(allie)
             print("")
 
     def verification_inventaire(self) -> None:
+
         print(self.inventaire)
 
     def ajout_objet_inventaire(self, ressources: List[Ressource]) -> None:
@@ -386,7 +438,7 @@ def menu_allies(environnement: Environnement) -> None:
 def menu_lieux(environnement: Environnement):
     choix_menu_lieu = 0
     while choix_menu_lieu != -1:
-        if len(environnement.lieux) == 0:
+        if len(environnement.lieux) == 0 or environnement.joueur.vie <= 0:
             choix_menu_lieu = -1
         else:
             print(
@@ -411,7 +463,10 @@ def jouer_une_session(filename: str) -> None:
     choix_centre_village = 0
     while choix_centre_village != -1:
         if len(environnement.lieux) == 0:
-            print("Vous avez gagnez la partie.")
+            print("Vous avez gagnez")
+            choix_centre_village = -1
+        elif environnement.joueur.vie <= 0:
+            print("Vous êtes mort. Game over.")
             choix_centre_village = -1
         else:
             print("Bienvenue au village de Valun.")
