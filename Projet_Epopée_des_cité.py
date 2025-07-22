@@ -134,7 +134,13 @@ class Joueur(Personnage):
             print("")
 
     def verification_inventaire(self) -> None:
+        """Permet de voir l'inventaire.
 
+        Exemples:
+            >>> joueur = Joueur("Talion", 10, 100, inventaire = {"or": 0})
+            >>> joueur.verification_inventaire()
+            {"or": 0}
+        """
         print(self.inventaire)
 
     def ajout_objet_inventaire(self, ressources: List[Ressource]) -> None:
