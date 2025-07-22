@@ -75,10 +75,12 @@ class Joueur(Personnage):
     def afficher_lieux(self, lieux: List[Lieu]) -> None:
         for lieu in lieux:
             lieu.representation()
+            print("")
 
     def afficher_allie(self, allies: List[Allie]) -> None:
         for allie in allies:
             print(allie)
+            print("")
 
     def verification_inventaire(self) -> None:
         print(self.inventaire)
@@ -124,7 +126,7 @@ class Joueur(Personnage):
             lieu.ennemis = []
             self.ajout_objet_inventaire(lieu.ressources)
             lieu.ressources = []
-            print(f"Vous avez accomplli le lieu {lieu}")
+            print(f"Vous avez accomplli le lieu {lieu.nom}")
             return True
 
 
@@ -196,22 +198,25 @@ def sauvegarder_partie(
     environnement: Environnement,
 ) -> None:
     dict_allies = [allie.__dict__ for allie in environnement.allies]
-    dict_lieux = [lieu.__dict__ for lieu in environnement.lieux]
-    dict_ressources = []
-    dict_ennemis = []
-    for lieu in dict_lieux:
-        ressources = lieu["ressources"]
-        ennemis = lieu["ennemis"]
+    dict_lieux = []
+    for lieu in environnement.lieux:
+        ressources = lieu.ressources
+        ennemis = lieu.ennemis
         dict_ressources = [ressource.__dict__ for ressource in ressources]
         dict_ennemis = [ennemi.__dict__ for ennemi in ennemis]
-        lieu["ressources"] = dict_ressources
-        lieu["ennemis"] = dict_ennemis
+        dict_lieux.append(
+            {
+                "nom": lieu.nom,
+                "description": lieu.description,
+                "ressources": dict_ressources,
+                "ennemis": dict_ennemis,
+            }
+        )
     dict_environnement = {
         "joueur": environnement.joueur.__dict__,
         "allies": dict_allies,
         "lieux": dict_lieux,
     }
-    print(dict_environnement)
     with open(file=filename, mode="w", encoding="utf-8") as fichier:
         json.dump(dict_environnement, fichier, ensure_ascii=False, indent=2)
 
@@ -348,7 +353,7 @@ def choix_lieux(environnement: Environnement):
             if lieu.nom == choix_lieu:
                 force_total = 0
                 for ennemi in lieu.ennemis:
-                    print(ennemi)
+                    ennemi.parler()
                     force_total += ennemi.force
                 print(
                     "Voici la force total de tous les ennemis du lieu.",
@@ -379,13 +384,11 @@ def menu_allies(environnement: Environnement) -> None:
 
 
 def menu_lieux(environnement: Environnement):
-    if len(environnement.lieux) == 0:
-        print("Vous avez gagnez la partie.")
-        choix_centre_village = -1
-        choix_centre_village = -1
-    else:
-        choix_menu_lieu = 0
-        while choix_menu_lieu != -1:
+    choix_menu_lieu = 0
+    while choix_menu_lieu != -1:
+        if len(environnement.lieux) == 0:
+            choix_menu_lieu = -1
+        else:
             print(
                 "Veuillez choisir une action entre: 1: voir la liste des lieux, 2: sauvegarder, 3: voir inventaire et -1: Revenir à la place principale du village"
             )
@@ -407,25 +410,29 @@ def jouer_une_session(filename: str) -> None:
     environnement = creation_environnement(filename)
     choix_centre_village = 0
     while choix_centre_village != -1:
-        print("Bienvenue au village de Valun.")
-        print(
-            "Veuillez choisir une action entre: 1: Allée dans la guilde des alliés, 2: Sortir du village, 3: sauvegarder, 4: Voir inventaire et -1: quitter"
-        )
-        choix_centre_village = int(input())
-        match choix_centre_village:
-            case 1:
-                menu_allies(environnement)
-            case 2:
-                menu_lieux(environnement)
-            case 3:
-                sauvegarder_partie("partie_sauvegarder.json", environnement)
-            case 4:
-                environnement.joueur.verification_inventaire()
-            case -1:
-                print("Vous avez quitter la partie. Sauvegarde en cours")
-                sauvegarder_partie("partie_sauvegarder.json", environnement)
-            case _:
-                print("Commande non reconnue.")
+        if len(environnement.lieux) == 0:
+            print("Vous avez gagnez la partie.")
+            choix_centre_village = -1
+        else:
+            print("Bienvenue au village de Valun.")
+            print(
+                "Veuillez choisir une action entre: 1: Allée dans la guilde des alliés, 2: Sortir du village, 3: sauvegarder, 4: Voir inventaire et -1: quitter"
+            )
+            choix_centre_village = int(input())
+            match choix_centre_village:
+                case 1:
+                    menu_allies(environnement)
+                case 2:
+                    menu_lieux(environnement)
+                case 3:
+                    sauvegarder_partie("partie_sauvegarder.json", environnement)
+                case 4:
+                    environnement.joueur.verification_inventaire()
+                case -1:
+                    print("Vous avez quitter la partie. Sauvegarde en cours")
+                    sauvegarder_partie("partie_sauvegarder.json", environnement)
+                case _:
+                    print("Commande non reconnue.")
 
 
 jouer_une_session("data.json")
