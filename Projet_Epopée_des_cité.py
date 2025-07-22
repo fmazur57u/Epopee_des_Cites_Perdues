@@ -55,8 +55,14 @@ class Lieu:
         self.ressources = ressources
         self.ennemis = ennemis
 
-    def __str__(self) -> str:
-        return f"nom: {self.nom}, description: {self.description}, ressources: {self.ressources}, ennemis: {self.ennemis}"
+    def representation(self) -> str:
+        print(f"nom: {self.nom}, description: {self.description}")
+        print("Voici la liste des ressources.")
+        for ressource in self.ressources:
+            print(ressource)
+        print("Voici la liste des ennemis.")
+        for ennemi in self.ennemis:
+            print(ennemi)
 
 
 class Joueur(Personnage):
@@ -64,48 +70,62 @@ class Joueur(Personnage):
     def __init__(self, nom: str, force: int, vie: int, inventaire: Dict[str, int]):
         super().__init__(force, nom)
         self.vie = vie
-        self.inventaires = inventaire
+        self.inventaire = inventaire
 
     def afficher_lieux(self, lieux: List[Lieu]) -> None:
         for lieu in lieux:
-            print(lieu)
+            lieu.representation()
 
     def afficher_allie(self, allies: List[Allie]) -> None:
         for allie in allies:
             print(allie)
 
     def verification_inventaire(self) -> None:
-        print(self.inventaires)
+        print(self.inventaire)
 
-    def ajout_objet_inventaire(self, ressource: str) -> None:
-        self.inventaires[ressource["nom"]] += ressource["quantite"]
-        print(f"Vous avez récupérer {ressource["quantite"]} de {ressource["nom"]}")
+    def ajout_objet_inventaire(self, ressources: List[Ressource]) -> None:
+        for ressource in ressources:
+            if ressource.nom in self.inventaire:
+                self.inventaire[ressource.nom] += ressource.quantite
+            else:
+                self.inventaire[ressource.nom] = ressource.quantite
+            print(f"Vous avez récupérer {ressource.quantite} de {ressource.nom}")
 
     def payer_allie(
         self,
         allie: Allie,
     ) -> bool:
-        prix = re.search(pattern=r"(\d+) unités d'or", string=allie.dialogue)
-        print(prix)
+        prix = re.search(pattern=r"(\d+) (unités d'or)", string=allie.dialogue)
+
         if not prix:
             print("Prix non trouver donc c'est gratuit.")
             self.force += allie.force
             return True
-        elif int(prix.group()[0]) > self.inventaires["or"]:
+        elif int(prix.group(1)) > self.inventaire["or"]:
             print(f"Vous n'avez pas assez d'or pour payer {allie.nom}.")
             return False
         else:
-            self.inventaires["or"] -= prix
+            self.inventaire["or"] -= int(prix.group(1))
             self.force += allie.force
             print("Allié payer avec succés.")
             return True
 
-    def attaquer(self, ennemi: Dict[str, Union[str, int]]) -> None:
-        if self.force < ennemi["force"]:
-            self.vie -= ennemi["force"]
-            print(f"L'ennemi vous fait {ennemi["force"]} de point de dégats.")
+    def attaquer(self, force_total: int, lieu: Lieu) -> bool:
+        if self.force < force_total:
+            self.vie -= force_total
+            print(
+                f"Les ennemis du lieu vous ont fait {force_total} de point de dégats."
+            )
+            return False
         else:
-            print(f"Vous avez tuer un {ennemi["nom"]}.")
+            print(
+                f"Vous avez tuer tous les ennemis du lieu. Vous pouvez donc récupérer toutes les ressources du lieu."
+            )
+            lieu.ennemis = []
+            self.ajout_objet_inventaire(lieu.ressources)
+            lieu.ressources = []
+            print(f"Vous avez accomplli le lieu {lieu}")
+            return True
 
 
 class Environnement:
@@ -201,11 +221,53 @@ def creation_environnement(
 ) -> Environnement:
     if os.path.exists("partie_sauvegarder.json"):
         environnement_dict = load_json("partie_sauvegarder.json")
-        environnement = Environnement(
-            joueur=environnement_dict["joueur"],
-            allies=environnement_dict["allies"],
-            lieux=environnement_dict["lieux"],
+        dict_joueur = environnement_dict["joueur"]
+        joueur = Joueur(
+            nom=dict_joueur["nom"],
+            vie=dict_joueur["vie"],
+            force=dict_joueur["force"],
+            inventaire=dict_joueur["inventaire"],
         )
+        dict_allies = environnement_dict["allies"]
+        allies = [
+            Allie(
+                nom=allie["nom"],
+                force=allie["force"],
+                dialogue=allie["dialogue"],
+            )
+            for allie in dict_allies
+        ]
+        dict_lieux = environnement_dict["lieux"]
+        ressources = []
+        ennemis = []
+        lieux = []
+        for lieu in dict_lieux:
+            ressources = [
+                Ressource(
+                    nom=ressource["nom"],
+                    quantite=ressource["quantite"],
+                    utilite=ressource["utilite"],
+                )
+                for ressource in lieu["ressources"]
+            ]
+            ennemis = [
+                Ennemi(
+                    nom=ennemi["nom"],
+                    force=ennemi["force"],
+                    dialogue=ennemi["dialogue"],
+                )
+                for ennemi in lieu["ennemis"]
+            ]
+            lieux.append(
+                Lieu(
+                    nom=lieu["nom"],
+                    description=lieu["description"],
+                    ressources=ressources,
+                    ennemis=ennemis,
+                )
+            )
+
+        environnement = Environnement(joueur=joueur, allies=allies, lieux=lieux)
     else:
         print("Veuillez choisir un nom. Attention vous ne pourrez pas le changer.")
         environnement_dict = load_json(filename)
@@ -214,36 +276,36 @@ def creation_environnement(
         personnages = environnement_dict["personnages"]
         allies = [
             Allie(
-                nom=personnage["nom"],
+                nom=personnage["nom"].lower(),
                 force=personnage["force"],
                 dialogue=personnage["dialogue"],
             )
             for personnage in personnages
             if personnage["type"] == "allié"
         ]
-        ennemis = [
-            Ennemi(
-                nom=personnage["nom"],
-                force=personnage["force"],
-                dialogue=personnage["dialogue"],
-            )
-            for personnage in personnages
-            if personnage["type"] == "ennemi"
-        ]
-        ressources = [
-            Ressource(
-                nom=ressource["nom"],
-                quantite=ressource["quantite"],
-                utilite=ressource["utilite"],
-            )
-            for ressource in environnement_dict["ressources"]
-        ]
         lieux = [
             Lieu(
-                nom=lieu["nom"],
+                nom=lieu["nom"].lower(),
                 description=lieu["description"],
-                ressources=ressources,
-                ennemis=ennemis,
+                ressources=[
+                    Ressource(
+                        nom=ressource["nom"],
+                        quantite=ressource["quantite"],
+                        utilite=ressource["utilite"],
+                    )
+                    for ressource in environnement_dict["ressources"]
+                    if ressource["nom"] in lieu["ressources"]
+                ],
+                ennemis=[
+                    Ennemi(
+                        nom=personnage["nom"].lower(),
+                        force=personnage["force"],
+                        dialogue=personnage["dialogue"],
+                    )
+                    for personnage in personnages
+                    if personnage["type"] == "ennemi"
+                    and personnage["nom"].lower() in lieu["ennemis"]
+                ],
             )
             for lieu in environnement_dict["lieux"]
         ]
@@ -259,9 +321,11 @@ def choix_allies(environnement: Environnement):
         print(
             "Sélectionner le nom de l'allié que vous voulez sélectionner ou sélectionner -1 pour ne rien choisir."
         )
-        choix_allie = input()
-        if choix_allie == -1:
+        choix_allie = input().lower()
+        if choix_allie == "-1":
             print("Aucun allie choisie.")
+        elif choix_allie not in [allie.nom for allie in environnement.allies]:
+            print("L'allie sélectionner n'est pas disponible.")
         else:
             for allie in environnement.allies:
                 if allie.nom == choix_allie:
@@ -269,11 +333,36 @@ def choix_allies(environnement: Environnement):
                         environnement.allies.remove(allie)
 
 
+def choix_lieux(environnement: Environnement):
+    environnement.joueur.afficher_lieux(environnement.lieux)
+    print(
+        "Sélectionner le nom correspondant au lieu que vous voulez sélectionner ou sélectionner -1 pour ne rien choisir."
+    )
+    choix_lieu = input().lower()
+    if choix_lieu == "-1":
+        print("Aucun lieu choisie.")
+    elif choix_lieu not in [lieu.nom for lieu in environnement.lieux]:
+        print("Le lieu sélectionner n'éxiste pas.")
+    else:
+        for lieu in environnement.lieux:
+            if lieu.nom == choix_lieu:
+                force_total = 0
+                for ennemi in lieu.ennemis:
+                    print(ennemi)
+                    force_total += ennemi.force
+                print(
+                    "Voici la force total de tous les ennemis du lieu.",
+                    force_total,
+                )
+                if environnement.joueur.attaquer(force_total, lieu):
+                    environnement.lieux.remove(lieu)
+
+
 def menu_allies(environnement: Environnement) -> None:
     choix_menu_allies = 0
     while choix_menu_allies != -1:
         print(
-            "Veuillez choisir une action entre: 1: voir la liste des allié, 2: sauvegarder et -1: Revenir à la place principale du village"
+            "Veuillez choisir une action entre: 1: voir la liste des allié, 2: sauvegarder, 3: voir inventaire-1: Revenir à la place principale du village"
         )
         choix_menu_allies = int(input())
         match choix_menu_allies:
@@ -281,8 +370,37 @@ def menu_allies(environnement: Environnement) -> None:
                 choix_allies(environnement=environnement)
             case 2:
                 sauvegarder_partie("partie_sauvegarder.json", environnement)
+            case 3:
+                environnement.joueur.verification_inventaire()
+            case -1:
+                print("Retour à la place principale du village.")
             case _:
                 print("Commande non reconnue.")
+
+
+def menu_lieux(environnement: Environnement):
+    if len(environnement.lieux) == 0:
+        print("Vous avez gagnez la partie.")
+        choix_centre_village = -1
+        choix_centre_village = -1
+    else:
+        choix_menu_lieu = 0
+        while choix_menu_lieu != -1:
+            print(
+                "Veuillez choisir une action entre: 1: voir la liste des lieux, 2: sauvegarder, 3: voir inventaire et -1: Revenir à la place principale du village"
+            )
+            choix_menu_lieu = int(input())
+            match choix_menu_lieu:
+                case 1:
+                    choix_lieux(environnement)
+                case 2:
+                    sauvegarder_partie("partie_sauvegarder.json", environnement)
+                case 3:
+                    environnement.joueur.verification_inventaire()
+                case -1:
+                    print("Retour à la place principale du village.")
+                case _:
+                    print("Commande non reconnue.")
 
 
 def jouer_une_session(filename: str) -> None:
@@ -291,44 +409,23 @@ def jouer_une_session(filename: str) -> None:
     while choix_centre_village != -1:
         print("Bienvenue au village de Valun.")
         print(
-            "Veuillez choisir une action entre: 1: Allée dans la guilde des alliés, 2: Sortir du village et 3: sauvegarder et -1: quitter"
+            "Veuillez choisir une action entre: 1: Allée dans la guilde des alliés, 2: Sortir du village, 3: sauvegarder, 4: Voir inventaire et -1: quitter"
         )
         choix_centre_village = int(input())
         match choix_centre_village:
             case 1:
                 menu_allies(environnement)
             case 2:
-                choix_menu_lieu = 0
-                while choix_menu_lieu != -1:
-                    print(
-                        "Veuillez choisir une action entre: 1: voir la liste des lieux, 2: sauvegarder et -1: Revenir à la place principale du village"
-                    )
-                    choix_menu_lieu = int(input())
-                    match choix_menu_lieu:
-                        case 1:
-                            environnement.joueur.afficher_lieux(environnement.lieux)
-                            print(
-                                "Sélectionner le numéros correspondant au lieu que vous voulez sélectionner ou sélectionner -1 pour ne rien choisir."
-                            )
-                            choix_lieu = int(input())
-                            if choix_lieu == -1:
-                                print("Aucun lieu choisie.")
-                            else:
-                                try:
-                                    lieu_selectionner = environnement["lieux"][
-                                        choix_lieu
-                                    ]
-                                    print(f"Vous entrez dans {lieu_selectionner}")
-                                    choix_action = 0
-                                    while choix_action != -1:
-                                        print(
-                                            "Veuillez sélectionner l'action que vous souhaitez faire: 1-Voir les ennemis de la zone, 2-Voir les ressource de la zone, 3-Sauvegarder, -1:Revenir au menu des lieux"
-                                        )
-                                        choix_action = int(input())
-                                except IndexError as e:
-                                    print(
-                                        f"L'index utilisé est en dehors de la plage {e}"
-                                    )
+                menu_lieux(environnement)
+            case 3:
+                sauvegarder_partie("partie_sauvegarder.json", environnement)
+            case 4:
+                environnement.joueur.verification_inventaire()
+            case -1:
+                print("Vous avez quitter la partie. Sauvegarde en cours")
+                sauvegarder_partie("partie_sauvegarder.json", environnement)
+            case _:
+                print("Commande non reconnue.")
 
 
 jouer_une_session("data.json")

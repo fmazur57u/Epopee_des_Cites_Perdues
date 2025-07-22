@@ -11,6 +11,7 @@
     "ressources": [
         {"nom": "or", "quantite": 20, "utilite": "Acheter de l'aide"},
         {"nom": "bois", "quantite": 10, "utilite": "Construire des abris"},
-        {"nom": "herbes", "quantite": 20, "utilite": "Préparer des potions de soins"}
+        {"nom": "herbes", "quantite": 20, "utilite": "Préparer des potions de soins"},
+        {"nom": "pierres", "quantite": 20, "utilite": "Construire des abris"}
     ]
 }
