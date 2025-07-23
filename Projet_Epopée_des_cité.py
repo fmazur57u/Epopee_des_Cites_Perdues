@@ -5,34 +5,147 @@ import os
 
 
 class Personnage:
-    def __init__(self, force: int, nom: str):
-        self.force = force
+    """Classe qui représente un personnage avec un nom et des points de force. Cette classe est la classe mére de Joueur
+    et de Png.
+
+    Attributes:
+        nom (str): le nom du personnage.
+        force (int): les points de force du personnage.
+
+    Exemple:
+        >>> personnage = Personnage(nom="Talion", force=5)
+        >>> personnage.nom
+        "Talion"
+        >>> personnage.force
+        5
+    """
+
+    def __init__(self, nom: str, force: int):
+        """Initialise un nouveau personnage.
+
+        Args:
+            nom (str): le nom du personnage.
+            force (int): les points de force du personnage.
+        """
         self.nom = nom
+        self.force = force
 
 
 class Png(Personnage):
+    """Classe fille de Personnage et mére des classe Allie et Ennemi qui représente un personnage non jouable avec un nom, des points de force, et un dialogue.
+    Le png peut parler.
+
+    Attributes:
+        nom (str): le nom du png.
+        force (int): les points de force du png.
+        dialogue (str): Ce que dit le png.
+
+    Exemples:
+        >>> png = Png(nom = Talion, force = 5, dialogue = "Si tu veut que je t'aide, il faut me payer 10 unités d'or.")
+        >>> png.parler()
+        "Si tu veut que je t'aide, il faut me payer 10 unités d'or."
+    """
+
     def __init__(self, nom: str, force: int, dialogue: str):
-        super().__init__(force, nom)
+        """ "Initialise un nouveau png.
+
+        Args:
+            nom (str): le nom du png.
+            force (int): les points de force du png.
+            dialogue (str): Ce que dit le png.
+        """
+        super().__init__(nom, force)
         self.dialogue = dialogue
 
     def __str__(self) -> str:
+        """Permet de donner une représentation lisible des caractéristiques d'un png (nom et force).
+
+        returns:
+            str: Une représentation lisible de l'objet
+
+        Exemples:
+            >>> png = Png("Talion", 5, "Si tu veut que je t'aide, il faut me payer 10 unités d'or.")
+            >>> print(png)
+            nom: Talion, force: 5
+
+        """
         return f"nom: {self.nom}, force: {self.force}"
 
     def parler(self) -> None:
+        """Permet au png instancier de dire sont dialogue.
+
+        Exemples:
+            >>> png = Png(nom = Talion, force = 5, dialogue = "Si tu veut que je t'aide, il faut me payer 10 unités d'or.")
+            >>> png.parler()
+            "Si tu veut que je t'aide, il faut me payer 10 unités d'or."
+        """
         print(self.dialogue)
 
 
 class Allie(Png):
+    """Classe fille de Png qui représente un allié.
+
+    Attributes:
+        nom (str): Le nom de l'allié
+        force (int): Les points de force de l'allié
+        dialogue (str): Ce que dit l'allié
+
+    Exemples:
+        >>> allie = Allie("Talion", 5, "Si tu veut que je t'aide, il faut me payer 10 unités d'or.")
+        >>> allie.parler()
+        "Si tu veut que je t'aide, il faut me payer 10 unités d'or."
+    """
+
     def __init__(self, nom: str, force: int, dialogue: str):
+        """Initialise un nouveau allié
+
+        Args:
+            nom (str): Le nom de l'allié
+            force (int): Les points de force de l'allié
+            dialogue (str): Ce que dit l'allié
+        """
         super().__init__(nom, force, dialogue)
 
 
 class Ennemi(Png):
+    """Classe fille de Png qui représente un ennemi.
+
+    Attributes:
+        nom (str): Le nom de l'ennemi
+        force (int): Les points de force de l'ennemi
+        dialogue (str): Ce que dit l'ennemi
+
+    Exemples:
+        >>> ennemi = Ennemi("Serpent géant", 5, "SSSH")
+        >>> ennemi.parler()
+        "SSSH"
+    """
+
     def __init__(self, nom: str, force: int, dialogue: str):
+        """Initialise un nouveau ennemi
+
+        Args:
+            nom (str): Le nom de l'ennemi
+            force (int): Les points de force de l'ennemi
+            dialogue (str): Ce que dit l'ennemi
+        """
         super().__init__(nom, force, dialogue)
 
 
 class Ressource:
+    """Classe qui représente une ressource définit par un nom, une quantité et une utilité.
+
+    Attributes:
+        nom (str): le nom de la ressource
+        quantite (int): La quantité de la ressource
+        utilite (str): L'utilité de la ressource
+
+    Exemples:
+        >>> ressource = Ressource("or", 20, "Permet de payer un allié.")
+        >>> print ressource
+        or, 20, Permet de payer un allié.
+    """
+
     def __init__(self, nom: str, quantite: int, utilite: str):
         self.nom = nom
         self.quantite = quantite
