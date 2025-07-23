@@ -147,15 +147,52 @@ class Ressource:
     """
 
     def __init__(self, nom: str, quantite: int, utilite: str):
+        """Initialise une nouvelle ressource.
+
+        Args:
+            nom (str): le nom de la ressource
+            quantite (int): La quantité de la ressource
+            utilite (str): L'utilité de la ressource
+        """
         self.nom = nom
         self.quantite = quantite
         self.utilite = utilite
 
     def __str__(self) -> str:
+        """Permet de donner une représentation lisible d'une ressource.
+
+        Returns:
+            str: représentation lisible d'une ressource
+
+        Exemples:
+            >>> ressource = Ressource("or", 20, "Permet de payer un allié.")
+            >>> print ressource
+            or, 20, Permet de payer un allié.
+        """
         return f"{self.nom}, {self.quantite}, {self.utilite}"
 
 
 class Lieu:
+    """Classe qui représente un lieu à visiter sui à un nom, une description, des ressources disponible et des ennemis à combattre.
+
+    Attributes:
+        nom (str): Le nom du lieu
+        description (str): La description du lieu
+        ressources (List[Ressources]): Une liste d'objet de type ressource qui représente toutes les ressources disponible.
+        ennemis (List[Ennemi]): Une liste d'objet de type ennemi qui représente les ennemis à combattre.
+
+    Exemples:
+        >>> ressources = [Ressource("or", 20, "Acheter de l'aide")]
+        >>> ennemis = [Ennemi("serpent géant", 8, "SSSH")]
+        >>> lieu = Lieu("Temple oublié", "Un temple envahi par la végétation", ressources, ennemis)
+        >>> lieu.representation()
+        nom: Temple oublié, description: Un temple envahi par la végétation
+        Voici la liste des ressources.
+        or, 20, Acheter de l'aide
+        Voici la liste des ennemis.
+        nom: serpent géant, force: 8
+    """
+
     def __init__(
         self,
         nom: str,
@@ -163,12 +200,36 @@ class Lieu:
         ressources: List[Ressource],
         ennemis: List[Ennemi],
     ):
+        """Initialise un nouveau lieu.
+
+        Args:
+            nom (str): Le nom du lieu
+            description (str): La description du lieu
+            ressources (List[Ressources]): Une liste d'objet de type ressource qui représente toutes les ressources disponible.
+            ennemis (List[Ennemi]): Une liste d'objet de type ennemi qui représente les ennemis à combattre.
+        """
         self.nom = nom
         self.description = description
         self.ressources = ressources
         self.ennemis = ennemis
 
     def representation(self) -> str:
+        """Donne une représenttion complete et précise d'un lieu.
+
+        Returns:
+            str: La représentation complete et précise d'un lieu.
+
+        Exemples:
+            >>> ressources = [Ressource("or", 20, "Acheter de l'aide")]
+            >>> ennemis = [Ennemi("serpent géant", 8, "SSSH")]
+            >>> lieu = Lieu("Temple oublié", "Un temple envahi par la végétation", ressources, ennemis)
+            >>> lieu.representation()
+            nom: Temple oublié, description: Un temple envahi par la végétation
+            Voici la liste des ressources.
+            or, 20, Acheter de l'aide
+            Voici la liste des ennemis.
+            nom: serpent géant, force: 8
+        """
         print(f"nom: {self.nom}, description: {self.description}")
         print("Voici la liste des ressources.")
         for ressource in self.ressources:
@@ -237,9 +298,9 @@ class Joueur(Personnage):
             List[Allie]: Liste d'objet de type Alliés qui correspond au alliés disponible.
 
         Exemples:
-            >>> Alliés = [Allie(nom="arwen", force = 5, dialogue = "Je peux t'aider à explorer, mais il me faut 10 unités d'or.")]
+            >>> alliés = [Allie(nom="arwen", force = 5, dialogue = "Je peux t'aider à explorer, mais il me faut 10 unités d'or.")]
             >>> joueur = Joueur("Talion", 10, 100, inventaire = {"or": 0})
-            >>> joueur.afficher_allie(Alliés)
+            >>> joueur.afficher_allie(alliés)
             nom: arwen, force: 5
         """
         for allie in allies:
@@ -257,6 +318,20 @@ class Joueur(Personnage):
         print(self.inventaire)
 
     def ajout_objet_inventaire(self, ressources: List[Ressource]) -> None:
+        """Permet de récupérer une ressource.
+
+        Args:
+            ressources (List[Ressource]): La liste des ressources du lieu sélectionner.
+
+        Exemples:
+            >>> joueur = Joueur("Talion", 10, 100, inventaire = {"or": 0})
+            >>> ressources = [Ressource(or, 20, "Permet d'acheter de l'aide"), Ressource(pierres, 20, "Permet de construire de mur de pierre")]
+            >>> joueur.ressource(ressources)
+            "Vous avez récupérer 20 de or.
+            >>> joueur.verification_inventaire()
+            {"or": 20, "pierres": 20}
+
+        """
         for ressource in ressources:
             if ressource.nom in self.inventaire:
                 self.inventaire[ressource.nom] += ressource.quantite
@@ -268,6 +343,45 @@ class Joueur(Personnage):
         self,
         allie: Allie,
     ) -> bool:
+        """Permet de payer un allié.
+
+        Args:
+            allie (Allie): Un objet de type allie qui correponds à un allié qui à été sélectionner par le joueur.
+
+        Returns:
+            bool: Valeur qui montre si le payement à été un succés ou pas.
+
+        Exemples:
+            >>> allie = Allie(nom="arwen", force = 5, dialogue = "Je peux t'aider à explorer.")
+            >>> joueur = Joueur("Talion", 10, 100, inventaire = {"or": 0})
+            >>> joueur.payer_allie(allie)
+            "Prix non trouver donc c'est gratuit."
+            >>> print(joueur.payer_allie(allie)
+            True
+            >>> joueur.verification_inventaire()
+            {or: 0}
+            >>> joueur.force()
+            15
+
+            >>> allie = Allie(nom="arwen", force = 5, dialogue = "Je peux t'aider à explorer, mais il me faut 10 unités d'or.")
+            >>> joueur.payer_allie(allie)
+            "Vous n'avez pas assez d'or pour payer arwen"
+            >>> print(joueur.payer_allie(allie)
+            False
+            >>> joueur.force()
+            10
+
+            >>> allie = Allie(nom="arwen", force = 5, dialogue = "Je peux t'aider à explorer, mais il me faut 10 unités d'or.")
+            >>> joueur = Joueur("Talion", 10, 100, inventaire = {"or": 11})
+            >>> joueur.payer_allie(allie)
+            "Allié payer avec succés."
+            >>> print(joueur.payer_allie(allie))
+            True
+            >>> joueur.verification_inventaire()
+            {or: 1}
+            >>> joueur.force()
+            15
+        """
         prix = re.search(pattern=r"(\d+) (unités d'or)", string=allie.dialogue)
 
         if not prix:
@@ -284,6 +398,24 @@ class Joueur(Personnage):
             return True
 
     def attaquer(self, force_total: int, lieu: Lieu) -> bool:
+        """Permet d'attaquer tous les ennemis d'un lieu en même temps.
+
+        Args:
+            force_total (int): Le total des points de force des ennemis d'un lieu.
+            lieu (Lieu): Le lieu visiter.
+
+        Returns:
+            bool: Issue du combat. Si c'est true, tous les ennemis du lieu ont été
+            tuer. Si c'est False, le joueur perds autant de points de vie que de point de force de l'ennemi
+
+        Exemples:
+            >>> joueur = Joueur("Talion", 10, 100, inventaire = {"or": 0})
+            >>> Lieu(nom="Temple oublié", description="Un temple envahi par la végétation",
+            ressources=[Ressource(nom="or", quantite=20, utilite="Acheter de l'aide")],
+            ennemis=[Ennemis(nom="Serpent géant", force=8, dialogue="SSSSSh")])
+            >>> force_total = 8
+
+        """
         if self.force < force_total:
             self.vie -= force_total
             print(
