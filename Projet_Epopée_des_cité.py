@@ -327,7 +327,7 @@ class Joueur(Personnage):
             >>> joueur = Joueur("Talion", 10, 100, inventaire = {"or": 0})
             >>> ressources = [Ressource(or, 20, "Permet d'acheter de l'aide"), Ressource(pierres, 20, "Permet de construire de mur de pierre")]
             >>> joueur.ressource(ressources)
-            "Vous avez récupérer 20 de or.
+            Vous avez récupérer 20 de or.
             >>> joueur.verification_inventaire()
             {"or": 20, "pierres": 20}
 
@@ -398,7 +398,7 @@ class Joueur(Personnage):
             return True
 
     def attaquer(self, force_total: int, lieu: Lieu) -> bool:
-        """Permet d'attaquer tous les ennemis d'un lieu en même temps.
+        """Permet d'attaquer tous les ennemis d'un lieu en même temps ainsi que de récupérer toutes les ressources du lieu.
 
         Args:
             force_total (int): Le total des points de force des ennemis d'un lieu.
@@ -410,10 +410,41 @@ class Joueur(Personnage):
 
         Exemples:
             >>> joueur = Joueur("Talion", 10, 100, inventaire = {"or": 0})
-            >>> Lieu(nom="Temple oublié", description="Un temple envahi par la végétation",
+            >>> lieu = Lieu(nom="Temple oublié", description="Un temple envahi par la végétation",
             ressources=[Ressource(nom="or", quantite=20, utilite="Acheter de l'aide")],
             ennemis=[Ennemis(nom="Serpent géant", force=8, dialogue="SSSSSh")])
             >>> force_total = 8
+            >>> joueur.attaquer(force_total, lieu)
+            Vous avez tuer tous les ennemis du lieu. Vous pouvez donc récupérer toutes les ressources du lieu.
+            Vous avez accomplli le lieu Temple oublié
+            Vous avez récupérer 20 de or
+            >>> print(joueur.attaquer(force_total, lieu))
+            True
+            >>> lieu.ennemis
+            []
+            >>> lieu.ressources
+            []
+            >>> joueur.verification_inventaire()
+            {or: 20}
+            >>> joueur.vie
+            100
+
+            >>> lieu = Lieu(nom="Temple oublié", description="Un temple envahi par la végétation",
+            ressources=[Ressource(nom="or", quantite=20, utilite="Acheter de l'aide")],
+            ennemis=[Ennemis(nom="Serpent géant", force=15, dialogue="SSSSSh")])
+            >>> force_total = 15
+            >>> joueur.attaquer(force_total, lieu)
+            Les ennemis du lieu vous ont fait 15 de point de dégats.
+            >>> print(joueur.attaquer(force_total, lieu))
+            False
+            >>> lieu.ennemis
+            [Ennemis(nom="Serpent géant", force=15, dialogue="SSSSSh")]
+            >>> lieu.ressources
+            [Ressource(nom="or", quantite=20, utilite="Acheter de l'aide")]
+            >>> joueur.verification_inventaire()
+            {or: 0}
+            >>> joueur.vie
+            85
 
         """
         if self.force < force_total:
@@ -434,7 +465,32 @@ class Joueur(Personnage):
 
 
 class Environnement:
+    """Cette classes représente l'environnement de jeu qui contient les informations du joueur, des alliés et des lieux.
+
+    Attributes:
+        joueur (Joueur): Un objet de type joueur qui correspond à l'avatar du joueur.
+        allies (List[Allies]): Liste d'objet de type allies qui correspond à tous les alliés disponible dans la guilde des alliés.
+        lieux (List[Lieu]): Liste d'objets de type lieu qui correspond à tous les lieux disponible sur la carte.
+
+    Exemples:
+        >>> joueur = Joueur("Talion", 10, 100, inventaire = {"or": 0})
+        >>> allies = [Allie(nom="arwen", force = 5, dialogue = "Je peux t'aider à explorer.")]
+        >>> lieux = [Lieu(nom="Temple oublié", description="Un temple envahi par la végétation",
+        ressources=[Ressource(nom="or", quantite=20, utilite="Acheter de l'aide")],
+        ennemis=[Ennemis(nom="Serpent géant", force=8, dialogue="SSSSSh")])]
+        >>> environnement = Environnement(joueur, allies, lieux)
+        >>> print(environnement.joueur.vie)
+        100
+    """
+
     def __init__(self, joueur: Joueur, allies: List[Allie], lieux: List[Lieu]):
+        """Initialise un nouveau environnement.
+
+        Args:
+            joueur (Joueur): Un objet de type joueur qui correspond à l'avatar du joueur.
+            allies (List[Allies]): Liste d'objet de type allies qui correspond à tous les alliés disponible dans la guilde des alliés.
+            lieux (List[Lieu]): Liste d'objets de type lieu qui correspond à tous les lieux disponible sur la carte.
+        """
         self.joueur = joueur
         self.allies = allies
         self.lieux = lieux
@@ -500,6 +556,60 @@ def sauvegarder_partie(
     filename: str,
     environnement: Environnement,
 ) -> None:
+    """Fonction qui permet de sauvegarder la partie dans un fichier.
+
+    Args:
+        filename (str): nom du fichier de sauvegarde.
+        environnement (Environnement): L'environnement qui contient tous les informations sur le joeur, les alliés et les lieux.
+
+    Exemples:
+        >>> filename = "fichier_sauvegarde"
+        >>> joueur = Joueur("Talion", 10, 100, inventaire = {"or": 0})
+        >>> allies = [Allie(nom="arwen", force = 5, dialogue = "Je peux t'aider à explorer.")]
+        >>> lieux = [Lieu(nom="Temple oublié", description="Un temple envahi par la végétation",
+        ressources=[Ressource(nom="or", quantite=20, utilite="Acheter de l'aide")],
+        ennemis=[Ennemis(nom="Serpent géant", force=8, dialogue="SSSSSh")])]
+        >>> environnement = Environnement(joueur, allies, lieux)
+        >>> sauvegarder_partie(filename, environnement)
+        Le résultats dans le fichier est le suivant:
+        {
+            "joueur": {
+                "nom": 10,
+                "force": "Talion",
+                "vie": 100,
+                "inventaire": {
+                "or": 0
+                }
+            },
+            "allies": [
+                {
+                "nom": "arwen",
+                "force": 5,
+                "dialogue": "Je peux t'aider à explorer."
+                }
+            ],
+            "lieux": [
+                {
+                "nom": "Temple oublié",
+                "description": "Un temple envahi par la végétation",
+                "ressources": [
+                    {
+                    "nom": "or",
+                    "quantite": 20,
+                    "utilite": "Acheter de l'aide"
+                    }
+                ],
+                "ennemis": [
+                    {
+                    "nom": "serpent géant",
+                    "force": 8,
+                    "dialogue": "SSSSSh"
+                    }
+                ]
+                }
+            ]
+        }
+    """
     dict_allies = [allie.__dict__ for allie in environnement.allies]
     dict_lieux = []
     for lieu in environnement.lieux:
@@ -527,6 +637,23 @@ def sauvegarder_partie(
 def creation_environnement(
     filename: str,
 ) -> Environnement:
+    """Fonction qui permet de créer l'objet environnement correspondant à l'avancer du jeu.
+
+    Args:
+        filename (str): Le fichier qui contient les informations du jeu.
+
+    Returns:
+        Environnement: Objet qui contient toutes les informations de joueur, d'alliés et de lieux.
+
+    Exemples:
+        >>> filename = data.json
+        >>> creation_environnement(filename)
+        Veuillez choisir un nom. Attention vous ne pourrez pas le changer.
+        Talion
+        >>> environnement = creation_environnement(filename)
+        >>> print(environnement.joueur.nom)
+        Talion
+    """
     if os.path.exists("partie_sauvegarder.json"):
         environnement_dict = load_json("partie_sauvegarder.json")
         dict_joueur = environnement_dict["joueur"]
@@ -621,7 +748,8 @@ def creation_environnement(
     return environnement
 
 
-def choix_allies(environnement: Environnement):
+def choix_allies(environnement: Environnement) -> None:
+    """Fonction qui permet de choisir un alliés."""
     if len(environnement.allies) == 0:
         print("Il n'y a plus d'allies disponible.")
     else:
@@ -641,7 +769,8 @@ def choix_allies(environnement: Environnement):
                         environnement.allies.remove(allie)
 
 
-def choix_lieux(environnement: Environnement):
+def choix_lieux(environnement: Environnement) -> None:
+    """Fonction qui premet de choisir un lieu."""
     environnement.joueur.afficher_lieux(environnement.lieux)
     print(
         "Sélectionner le nom correspondant au lieu que vous voulez sélectionner ou sélectionner -1 pour ne rien choisir."
@@ -667,6 +796,7 @@ def choix_lieux(environnement: Environnement):
 
 
 def menu_allies(environnement: Environnement) -> None:
+    """Fonction du menu de la guilde des alliés."""
     choix_menu_allies = 0
     while choix_menu_allies != -1:
         print(
@@ -686,7 +816,8 @@ def menu_allies(environnement: Environnement) -> None:
                 print("Commande non reconnue.")
 
 
-def menu_lieux(environnement: Environnement):
+def menu_lieux(environnement: Environnement) -> None:
+    """Fonction du menu de la guilde des lieux."""
     choix_menu_lieu = 0
     while choix_menu_lieu != -1:
         if len(environnement.lieux) == 0 or environnement.joueur.vie <= 0:
@@ -710,6 +841,7 @@ def menu_lieux(environnement: Environnement):
 
 
 def jouer_une_session(filename: str) -> None:
+    """Fonction qui permet de joueur au jeu."""
     environnement = creation_environnement(filename)
     choix_centre_village = 0
     while choix_centre_village != -1:
